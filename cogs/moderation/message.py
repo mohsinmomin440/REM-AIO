@@ -165,7 +165,8 @@ class Message(commands.Cog):
 
         await ctx.message.delete()
         if len(string) < 3:
-            await ctx.error("The substring length must be at least 3 characters.")
+            await ctx.send("The substring length must be at least 3 characters.")
+            return
         else:
             await do_removal(ctx, 100, lambda e: string in e.content)
 
