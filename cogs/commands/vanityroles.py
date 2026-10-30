@@ -98,7 +98,7 @@ class VanityRoles(commands.Cog):
             await db.commit()
         await ctx.send("✅ All vanity role configurations have been reset.")
 
-    @tasks.loop(seconds=15)
+    @tasks.loop(minutes=5)  # Reduced from 15 seconds to 5 minutes to avoid rate limits
     async def vanity_checker(self):
         async with connect(DB_PATH) as db:
             async with db.execute(
@@ -123,6 +123,7 @@ class VanityRoles(commands.Cog):
 
             if is_active and current_status != "active":
                 await self.update_status(guild_id, vanity, "active")
+                # Only check recently active members to avoid rate limits
                 assigned = 0
                 for member in guild.members:
                     if member.status != discord.Status.offline and role and role not in member.roles:
@@ -131,6 +132,8 @@ class VanityRoles(commands.Cog):
                             assigned += 1
                         except Exception:
                             pass
+                    if assigned >= 50:  # Limit role assignments per cycle
+                        break
                 if log_channel:
                     await log_channel.send(
                         f"✅ Vanity `{vanity}` is now **active**. Role assigned to {assigned} members."
@@ -146,6 +149,8 @@ class VanityRoles(commands.Cog):
                             removed += 1
                         except Exception:
                             pass
+                    if removed >= 50:  # Limit role removals per cycle
+                        break
                 if log_channel:
                     await log_channel.send(
                         f"❌ Vanity `{vanity}` is now **inactive**. Role removed from {removed} members."
