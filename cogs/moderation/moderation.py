@@ -46,7 +46,8 @@ def convert(argument):
 
 async def do_removal(ctx, limit, predicate, *, before=None, after=None):
     if limit > 2000:
-        return await ctx.error(f"Too many messages to search given ({limit}/2000)")
+        await ctx.send(f"Too many messages to search given ({limit}/2000)")
+        return
 
     if before is None:
         before = ctx.message
@@ -58,10 +59,12 @@ async def do_removal(ctx, limit, predicate, *, before=None, after=None):
 
     try:
         deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
-    except discord.Forbidden as e:
-        return await ctx.error("I do not have permissions to delete messages.")
-    except discord.HTTPException as e:
-        return await ctx.error(f"Error: {e} (try a smaller search?)")
+    except discord.Forbidden:
+        await ctx.send("I do not have permissions to delete messages.")
+        return
+    except discord.HTTPException as exc:
+        await ctx.send(f"Error: {exc} (try a smaller search?)")
+        return
 
     spammers = Counter(m.author.display_name for m in deleted)
     deleted = len(deleted)
