@@ -719,7 +719,7 @@ class EmojiSync(commands.Cog):
     async def on_ready(self):
         if self._startup_sync_done:
             return
-        self._startup_sync_done = True
+
         await self.bot.wait_until_ready()
 
         if not self.config["startup_auto_sync"]:
@@ -728,6 +728,7 @@ class EmojiSync(commands.Cog):
         if self._startup_task and not self._startup_task.done():
             return
 
+        self._startup_sync_done = True
         self._startup_task = asyncio.create_task(self._run_startup_sync())
 
     @commands.hybrid_group(

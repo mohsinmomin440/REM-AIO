@@ -518,23 +518,30 @@ class Global(commands.Cog):
         await ctx.send(view = embed_to_view(confirm_embed, view = view))
 
     async def nickname_freeze_task(self, user_id: int):
-        while user_id in self.client.frozen_nicknames:
-            user_data = self.client.frozen_nicknames[user_id]
-            frozen_name = user_data["name"]
-            guild_ids = user_data["guild_ids"]
+        try:
+            while user_id in self.client.frozen_nicknames:
+                user_data = self.client.frozen_nicknames[user_id]
+                frozen_name = user_data["name"]
+                guild_ids = user_data["guild_ids"]
 
-            for guild_id in guild_ids:
-                guild = self.client.get_guild(guild_id)
-                if not guild:
-                    continue
-                member = guild.get_member(user_id)
-                if member and member.nick != frozen_name:
-                    try:
-                        await member.edit(nick=frozen_name)
-                    except:
-                        pass
+                for guild_id in guild_ids:
+                    guild = self.client.get_guild(guild_id)
+                    if not guild:
+                        continue
+                    member = guild.get_member(user_id)
+                    if member and member.nick != frozen_name:
+                        try:
+                            await member.edit(nick=frozen_name)
+                        except discord.Forbidden:
+                            log.warning("No permission to edit nickname for %s in %s", user_id, guild_id)
+                        except discord.HTTPException as exc:
+                            log.warning("Failed to edit nickname for %s in %s: %s", user_id, guild_id, exc)
 
-            await asyncio.sleep(10)
+                await asyncio.sleep(10)
+        except asyncio.CancelledError:
+            pass
+        except Exception as exc:
+            log.exception("nickname_freeze_task crashed for %s: %s", user_id, exc)
 
  
 
@@ -570,18 +577,25 @@ class Global(commands.Cog):
             return await ctx.send(f"Could not change {member.mention}'s nickname due to insufficient permissions.")
 
         async def monitor_nickname():
-            while member.id in self.local_frozen_nicks.get(guild_id, {}):
-                if member.nick != nickname:
-                    try:
-                        await member.edit(nick=nickname)
-                    except:
-                        self.local_frozen_nicks[guild_id].pop(member.id, None)
-                        await ctx.send(f"Stopped monitoring {member.mention}'s nickname due to insufficient permissions.")
-                        break
-                await asyncio.sleep(10)
+            try:
+                while member.id in self.local_frozen_nicks.get(guild_id, {}):
+                    if member.nick != nickname:
+                        try:
+                            await member.edit(nick=nickname)
+                        except discord.Forbidden:
+                            self.local_frozen_nicks[guild_id].pop(member.id, None)
+                            await ctx.send(f"Stopped monitoring {member.mention}'s nickname due to insufficient permissions.")
+                            break
+                        except discord.HTTPException as exc:
+                            log.warning("Failed to edit nickname for %s: %s", member.id, exc)
+                    await asyncio.sleep(10)
+            except asyncio.CancelledError:
+                pass
+            except Exception as exc:
+                log.exception("monitor_nickname crashed for %s: %s", member.id, exc)
 
-            if not self.local_frozen_nicks[guild_id]:
-                del self.local_frozen_nicks[guild_id]
+            if not self.local_frozen_nicks.get(guild_id):
+                self.local_frozen_nicks.pop(guild_id, None)
 
         asyncio.create_task(monitor_nickname())
 

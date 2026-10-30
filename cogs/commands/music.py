@@ -514,24 +514,25 @@ class Music(commands.Cog):
 
     async def inactivity_timer(self, guild):
         await asyncio.sleep(self.inactivity_timeout)
-        if len(guild.voice_channels[0].members) == 1:
-            player = None
-            for vc in self.client.voice_clients:
-                if vc.guild.id == guild.id:
-                    player = vc
-                    break
-            if player:
-                await player.disconnect(force=True)
-                try:
-                    ended = inactivity_embed()
-                    if self.client.user and self.client.user.avatar:
-                        ended.set_author(name="REM Music", icon_url=self.client.user.display_avatar.url)
-                    support = Button(label="Support", style=discord.ButtonStyle.link, url=serverLink)
-                    view = View()
-                    view.add_item(support)
-                    await player.ctx.channel.send(view=embed_to_view(ended, view=view))
-                except:
-                    pass
+        player = None
+        for vc in self.client.voice_clients:
+            if vc.guild.id == guild.id:
+                player = vc
+                break
+        if player and player.playing and len(player.channel.members) == 1:
+            await player.disconnect(force=True)
+            try:
+                ended = inactivity_embed()
+                if self.client.user and self.client.user.avatar:
+                    ended.set_author(name="REM Music", icon_url=self.client.user.display_avatar.url)
+                support = Button(label="Support", style=discord.ButtonStyle.link, url=serverLink)
+                view = View()
+                view.add_item(support)
+                ctx = getattr(player, "ctx", None)
+                if ctx and ctx.channel:
+                    await ctx.channel.send(view=embed_to_view(ended, view=view))
+            except Exception:
+                pass
 
     async def connect_nodes(self) -> None:
         try:
