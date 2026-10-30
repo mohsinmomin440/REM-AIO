@@ -66,39 +66,44 @@ def convert_time_to_seconds(time_str):
     return datetime.timedelta(**{unit: num})
 
 
+from collections import Counter
+
 async def do_removal(ctx, limit, predicate, *, before=None, after=None):
-  if limit > 2000:
-      return await ctx.error(f"Too many messages to search given ({limit}/2000)")
+    if limit > 2000:
+        await ctx.send(f"Too many messages to search given ({limit}/2000)")
+        return
 
-  if before is None:
-      before = ctx.message
-  else:
-      before = discord.Object(id=before)
+    if before is None:
+        before = ctx.message
+    else:
+        before = discord.Object(id=before)
 
-  if after is not None:
-      after = discord.Object(id=after)
+    if after is not None:
+        after = discord.Object(id=after)
 
-  try:
-      deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
-  except discord.Forbidden as e:
-      return await ctx.error("I do not have permissions to delete messages.")
-  except discord.HTTPException as e:
-      return await ctx.error(f"Error: {e} (try a smaller search?)")
+    try:
+        deleted_msgs = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
+    except discord.Forbidden:
+        await ctx.send("I do not have permissions to delete messages.")
+        return
+    except discord.HTTPException as exc:
+        await ctx.send(f"Error: {exc} (try a smaller search?)")
+        return
 
-  spammers = Counter(m.author.display_name for m in deleted)
-  deleted = len(deleted)
-  messages = [f'{emojis.TICK} | {deleted} message{" was" if deleted == 1 else "s were"} removed.']
-  if deleted:
-      messages.append("")
-      spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
-      messages.extend(f"**{name}**: {count}" for name, count in spammers)
+    spammers = Counter(m.author.display_name for m in deleted_msgs)
+    deleted_count = len(deleted_msgs)
+    messages = [f'{emojis.TICK} | {deleted_count} message{" was" if deleted_count == 1 else "s were"} removed.']
+    if deleted_count:
+        messages.append("")
+        spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
+        messages.extend(f"**{name}**: {count}" for name, count in spammers)
 
-  to_send = "\n".join(messages)
+    to_send = "\n".join(messages)
 
-  if len(to_send) > 2000:
-      await ctx.send(f"{emojis.TICK} | Successfully removed {deleted} messages.", delete_after=3)
-  else:
-      await ctx.send(to_send, delete_after=3)
+    if len(to_send) > 2000:
+        await ctx.send(f"{emojis.TICK} | Successfully removed {deleted_count} messages.", delete_after=3)
+    else:
+        await ctx.send(to_send, delete_after=3)
 
 def load_owner_ids():
     return OWNER_IDS
