@@ -60,15 +60,27 @@ async def open_connection(
     return db
 
 
-async def get_anti_db() -> aiosqlite.Connection:
-    """Return the shared singleton connection for anti.db (antinuke, whitelist, etc.)."""
+# Module-level cache of per-database instances
+_database_instances: dict[str, "Database"] = {}
+
+
+async def get_database(name: str = "anti.db") -> aiosqlite.Connection:
+    """Get or create a Database instance for the given database name and return its connection."""
     from db._db import Database
 
-    return await Database("anti.db").ensure_connection()
+    if name not in _database_instances:
+        _database_instances[name] = Database(name)
+    return await _database_instances[name].ensure_connection()
+
+
+async def get_anti_db() -> aiosqlite.Connection:
+    """Backward compatibility: return connection for anti.db."""
+    return await get_database("anti.db")
 
 
 async def close_shared_databases() -> None:
-    """Close long-lived shared database handles."""
+    """Close all long-lived shared database handles."""
     from db._db import Database
-
-    await Database().close()
+    for instance in _database_instances.values():
+        await instance.close()
+    _database_instances.clear()

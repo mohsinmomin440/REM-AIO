@@ -14,33 +14,27 @@ T = TypeVar("T")
 
 
 class Database:
-    _instance: Optional["Database"] = None
-    _lock: asyncio.Lock
-    db_path: str
-    db: Optional[aiosqlite.Connection]
+    """Per-database connection manager. Not a singleton - each database gets its own instance."""
 
-    def __new__(cls, db_path_name: str = "anti.db"):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.db_path = str(db_path(db_path_name))
-            cls._instance.db = None
-            cls._instance._lock = asyncio.Lock()
-        return cls._instance
+    def __init__(self, db_path_name: str = "anti.db"):
+        self.db_path = str(db_path(db_path_name))
+        self._db: Optional[aiosqlite.Connection] = None
+        self._lock = asyncio.Lock()
 
     async def connect(self, timeout: float = 30) -> aiosqlite.Connection:
         async with self._lock:
-            if self.db is None:
-                self.db = await aiosqlite.connect(self.db_path, timeout=timeout)
-                await self.db.execute("PRAGMA journal_mode=WAL")
-                await self.db.execute("PRAGMA busy_timeout=5000")
-                await self.db.execute("PRAGMA foreign_keys=ON")
-                await self.db.commit()
-        return self.db
+            if self._db is None:
+                self._db = await aiosqlite.connect(self.db_path, timeout=timeout)
+                await self._db.execute("PRAGMA journal_mode=WAL")
+                await self._db.execute("PRAGMA busy_timeout=5000")
+                await self._db.execute("PRAGMA foreign_keys=ON")
+                await self._db.commit()
+        return self._db
 
     async def ensure_connection(self) -> aiosqlite.Connection:
-        if self.db is None:
+        if self._db is None:
             await self.connect()
-        return self.db  # type: ignore[return-value]
+        return self._db  # type: ignore[return-value]
 
     async def execute_with_retries(
         self,
@@ -61,6 +55,6 @@ class Database:
 
     async def close(self) -> None:
         async with self._lock:
-            if self.db is not None:
-                await self.db.close()
-                self.db = None
+            if self._db is not None:
+                await self._db.close()
+                self._db = None

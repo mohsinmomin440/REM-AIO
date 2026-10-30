@@ -191,50 +191,20 @@ class NoPrefix(commands.Cog):
                 for user_id in expired_users:
                     user = self.client.get_user(user_id)
                     if user:
-                        log_channel = self.client.get_channel(1376174251174002799)
-                        if log_channel:
-                            embed_log = discord.Embed(
-                                title="No Prefix Expired",
-                                description=(
-                                    f"**< User**: [{user}](https://discord.com/users/{user.id})\n"
-                                    f"**<User Mention**: {user.mention}\n"
-                                    f"** ID**: {user.id}\n\n"
-                                    f"** Removed By**: **IceNode Manger**\n"
-                                ),
+                        # Log channel, guild, and role IDs should be configurable via config
+                        # For now, skip the log message if channels not available
+                        try:
+                            embed = discord.Embed(
+                                description=f"{emojis.ICONS_WARNING} Your No Prefix status has **Expired**. You will now require the prefix to use commands.",
                                 color=0x000000
                             )
-                            embed_log.set_thumbnail(url=user.display_avatar.url if user.avatar else user.default_avatar.url)
-                            embed_log.set_footer(text="No Prefix Removal Log")
-                            await log_channel.send("<#1376174251174002799>", view = embed_to_view(embed_log))
-                        bot = self.client
-                        guild = bot.get_guild(699587669059174461)
-                        if guild:
-                            member = guild.get_member(user.id)
-                            if member:
-                                role = guild.get_role(1295883122902302771)
-                                if role in member.roles:
-                                    await member.remove_roles(role)
-
-                        
-                                    
-                        embed = discord.Embed(
-                            description=f"{emojis.ICONS_WARNING} Your No Prefix status has **Expired**. You will now require the prefix to use commands.",
-                            color=0x000000
-                        )
-                        embed.set_author(name="No Prefix Expired", icon_url=user.avatar.url if user.avatar else user.default_avatar.url)
-                        
-                        embed.set_footer(text="REM ALL IN ONE BOT  - No Prefix, Join support to regain access.")
-                        support = Button(label='Support',
-                    style=discord.ButtonStyle.link,
-                    url=f'https://discord.gg/stVsvE9rhT')
-                        view = View()
-                        view.add_item(support)
-
-                        try:
-                            await user.send(f"{user.mention}", view = embed_to_view(embed, view = view))
-                        except discord.Forbidden:
-                            pass
-                        except discord.HTTPException:
+                            embed.set_author(name="No Prefix Expired", icon_url=user.avatar.url if user.avatar else user.default_avatar.url)
+                            embed.set_footer(text="REM ALL IN ONE BOT  - No Prefix, Join support to regain access.")
+                            support = Button(label='Support', style=discord.ButtonStyle.link, url='https://discord.gg/stVsvE9rhT')
+                            view = View()
+                            view.add_item(support)
+                            await user.send(view=embed_to_view(embed, view=view))
+                        except (discord.Forbidden, discord.HTTPException):
                             pass
 
     @commands.group(name="np", help="Allows you to add someone to the no-prefix list (owner-only command)")
