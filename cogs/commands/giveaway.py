@@ -187,25 +187,9 @@ class Giveaway(commands.Cog):
             return
 
         converted = self.convert(time)
-        if converted / 60 >= 50400:
+        if converted is None or converted / 60 >= 50400:
             embed = discord.Embed(title=f"{emojis.ICONS_WARNING} Access Denied",
                                   description=f"Time cannot exceed 31 days!", color=0x000000)
-            message = await ctx.send(view = embed_to_view(embed))
-            await asyncio.sleep(5)
-            await message.delete()
-            return
-
-        if converted == -1:
-            embed = discord.Embed(title=f"{emojis.CROSSICON} Error",
-                                  description=f"Invalid time format", color=0x000000)
-            message = await ctx.send(view = embed_to_view(embed))
-            await asyncio.sleep(5)
-            await message.delete()
-            return
-        if converted == -2:
-            embed = discord.Embed(title=f"{emojis.CROSSICON} Error",
-                                  description=f"Invalid time format. Please provide the time in numbers.",
-                                  color=0x000000)
             message = await ctx.send(view = embed_to_view(embed))
             await asyncio.sleep(5)
             await message.delete()
@@ -288,7 +272,8 @@ class Giveaway(commands.Cog):
             message = await ch.fetch_message(int(message_id))
 
             users = [i.id async for i in message.reactions[0].users()]
-            users.remove(self.bot.user.id)
+            if self.bot.user.id in users:
+                users.remove(self.bot.user.id)
 
             if len(users) < 1:
                 await ctx.send(f"{emojis.TICK} Successfully Ended the giveaway in <#{int(re[6])}>")

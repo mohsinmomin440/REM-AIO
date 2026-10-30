@@ -1037,17 +1037,17 @@ class Moderation(commands.Cog):
         mention_author=False)
       return
     idk = []
-    str = ""
+    output = ""
     async for entry in ctx.guild.audit_logs(limit=limit):
       idk.append(f'''User: `{entry.user}`
 Action: `{entry.action}`
 Target: `{entry.target}`
 Reason: `{entry.reason}`\n\n''')
     for n in idk:
-      str += n
-    str = str.replace("AuditLogAction.", "")
+      output += n
+    output = output.replace("AuditLogAction.", "")
     embed = discord.Embed(title=f"Audit Logs Of {ctx.guild.name}",
-                          description=f">>> {str}",
+                          description=f">>> {output}",
                           color=0x000000)
     embed.set_footer(text=f"Audit Log Actions For {ctx.guild.name}")
     await ctx.reply(view = embed_to_view(embed), mention_author=False)

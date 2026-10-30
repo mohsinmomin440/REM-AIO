@@ -104,11 +104,16 @@ class ReactionRoles(commands.Cog):
         role_id = await self.get_role_by_emoji(payload.guild_id, payload.message_id, str(payload.emoji))
         if role_id:
             guild = self.bot.get_guild(payload.guild_id)
+            if guild is None:
+                return
             role = guild.get_role(role_id)
             member = payload.member
 
             if role and member:
-                await member.add_roles(role, reason="Reaction role added")
+                try:
+                    await member.add_roles(role, reason="Reaction role added")
+                except discord.Forbidden:
+                    return
 
                 channel = guild.get_channel(payload.channel_id)
                 if channel:
@@ -132,10 +137,15 @@ class ReactionRoles(commands.Cog):
         role_id = await self.get_role_by_emoji(payload.guild_id, payload.message_id, str(payload.emoji))
         if role_id:
             guild = self.bot.get_guild(payload.guild_id)
+            if guild is None:
+                return
             member = guild.get_member(payload.user_id)
             role = guild.get_role(role_id)
             if role and member:
-                await member.remove_roles(role, reason="Reaction role removed")
+                try:
+                    await member.remove_roles(role, reason="Reaction role removed")
+                except discord.Forbidden:
+                    pass
 
 
 async def setup(bot):

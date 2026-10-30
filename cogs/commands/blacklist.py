@@ -186,6 +186,8 @@ class Blacklist(commands.Cog):
     async def on_message(self, message):
         if message.author.bot:
             return
+        if message.guild is None:
+            return
 
         guild_id = str(message.guild.id)
         words = await self.get_blacklisted_words(guild_id)

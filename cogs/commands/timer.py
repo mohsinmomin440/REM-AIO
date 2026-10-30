@@ -91,19 +91,19 @@ class Timer(commands.Cog):
                             description='Time is up!',
                             color=0x000000
                         )
-                        content= ctx.author.mention
-                        await message.edit(content=content, view = embed_to_view(embed))
-                        m = await ctx.channel.get_message(message.id)
-                        list_thingy = []
+                        content = ctx.author.mention
+                        await message.edit(content=content, view=embed_to_view(embed))
+                        m = await ctx.channel.fetch_message(message.id)
                         output_list_thingy = []
-                        reactants = await m.reactions[0].users().flatten()
-                        reactants.pop(reactants.index(self.client.user))
-                        for user in reactants:
-                            list_thingy.append(user.id)
-                            x = '<@!' + str(user.id) + '>' 
-                            output_list_thingy.append(x)
-                        if output_list_thingy != []:
-                            final = ', '.join(map(str, output_list_thingy))
+                        try:
+                            users = [u async for u in m.reactions[0].users()]
+                            for user in users:
+                                if user.id != self.bot.user.id:
+                                    output_list_thingy.append(user.mention)
+                        except Exception:
+                            pass
+                        if output_list_thingy:
+                            final = ', '.join(output_list_thingy)
                             return await ctx.send(f'The timer for **{title}** has ended!\n{final}')
                         else:
                             return await ctx.send(f'The timer for **{title}** has ended!')

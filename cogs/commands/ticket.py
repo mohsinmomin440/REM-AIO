@@ -98,6 +98,7 @@ class TicketSetupView(discord.ui.View):
         self.embed = discord.Embed(title="Ticket Panel", description="Select an option to open a ticket.", color=0x2B2D31)
         self.options = []
         self.channel = None
+        self.ticket_counter = 0
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id == self.author.id:
@@ -157,9 +158,8 @@ class TicketSetupView(discord.ui.View):
         )
 
         async def ticket_callback(i: discord.Interaction):
-            global ticket_counter
             selected_label = i.data["values"][0]
-            ticket_counter += 1
+            self.ticket_counter += 1
             option = next((opt for opt in self.options if opt["label"] == selected_label), None)
 
             if option is None:
@@ -181,7 +181,7 @@ class TicketSetupView(discord.ui.View):
             safe_label = "".join(ch for ch in selected_label.lower() if ch.isalnum() or ch in "-_")[:30] or "ticket"
             try:
                 ticket_channel = await i.guild.create_text_channel(
-                    name=f"{safe_label}-{ticket_counter}",
+                    name=f"{safe_label}-{self.ticket_counter}",
                     overwrites=overwrites,
                     reason=f"New support ticket by {i.user} ({i.user.id})"
                 )

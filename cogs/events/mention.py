@@ -42,7 +42,7 @@ class Mention(commands.Cog):
                     return
 
         guild_id = message.guild.id
-        data = await getConfig(guild_id) 
+        data = await getConfig(guild_id)
         prefix = data["prefix"]
 
         if self.bot.user in message.mentions:
@@ -66,4 +66,9 @@ class Mention(commands.Cog):
                 for button in buttons:
                     view.add_item(button)
 
-                await message.channel.send(view = embed_to_view(embed, view = view))
+                try:
+                    await message.channel.send(view=embed_to_view(embed, view=view))
+                except discord.Forbidden:
+                    pass
+                except discord.HTTPException:
+                    pass

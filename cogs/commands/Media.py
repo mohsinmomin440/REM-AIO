@@ -272,27 +272,23 @@ class Media(commands.Cog):
                 current_time = time.time()
                 self.infractions[message.author.id].append(current_time)
 
-                
+
                 self.infractions[message.author.id] = [
                     infraction for infraction in self.infractions[message.author.id]
                     if current_time - infraction <= 5
                 ]
 
-                if len(self.infractions[message.author.id]) >= 5:  
-                    async with connect('block.db') as block_db:
-                        await block_db.execute('INSERT OR IGNORE INTO user_blacklist (user_id) VALUES (?)', (message.author.id,))
-                        
-                        await block_db.commit()
-
+                if len(self.infractions[message.author.id]) >= 5:
+                    # Remove the permanent blacklist - just warn instead
                     embed = discord.Embed(
-                        title="You Have Been Blacklisted",
+                        title="Media Channel Warning",
                         description=(
-                            f"{emojis.ICONS_WARNING} You are blacklisted from using my commands due to spamming in the media channel. "
-                            "If you believe this is a mistake, please reach out to the support server with proof."
+                            f"{emojis.ICONS_WARNING} You have sent too many non-media messages in the media channel. "
+                            "Please only send media files in this channel."
                         ),
                         color=0x000000
                     )
-                    await message.channel.send(f"{message.author.mention}", view = embed_to_view(embed))
+                    await message.channel.send(f"{message.author.mention}", view=embed_to_view(embed))
                     del self.infractions[message.author.id]
 
 """

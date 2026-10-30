@@ -1,3 +1,5 @@
+from collections import Counter
+
 from __future__ import annotations
 from utils import emojis
 
@@ -57,7 +59,7 @@ def convert_time_to_seconds(time_str):
     time_units = {
         "h": "hours",
         "d": "days",
-        "m": "months"
+        "m": "minutes"
     }
     num = int(time_str[:-1])
     unit = time_units.get(time_str[-1])
@@ -425,8 +427,8 @@ class Owner(commands.Cog):
 
         user_mention = f"{user.mention} (**{user.name}**)"
 
-        success_message = f"Successfully unbanned {user_mention} from the following guild(s):\n{',     '.join(success_guilds)}" if success_guilds else "No guilds where the user was successfully unbanned."
-        error_message = f"Failed to unban {user_mention} from the following guild(s):\n{',    '.join(error_guilds)}" if error_guilds else "No errors during unbanning."
+        success_message = f"Successfully unbanned {user_mention} from the following guild(s):\n{', '.join(success_guilds)}" if success_guilds else "No guilds where the user was successfully unbanned."
+        error_message = f"Failed to unban {user_mention} from the following guild(s):\n{', '.join(error_guilds)}" if error_guilds else "No errors during unbanning."
 
         await ctx.reply(f"{success_message}\n{error_message}", mention_author=False)
 

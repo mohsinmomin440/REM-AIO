@@ -16,6 +16,7 @@ class Jail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = None
+        self.jail_check_loop = None
 
     async def cog_load(self) -> None:
         self.db = await open_connection(DB_FILE)
@@ -47,7 +48,8 @@ class Jail(commands.Cog):
         await self.db.commit()
 
     async def cog_unload(self) -> None:
-        self.jail_check_loop.cancel()
+        if self.jail_check_loop is not None:
+            self.jail_check_loop.cancel()
         if self.db is not None:
             await self.db.close()
             self.db = None

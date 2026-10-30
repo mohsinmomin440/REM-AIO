@@ -111,7 +111,7 @@ class Nightmode(commands.Cog):
                 )))
 
         for role in manageable_roles:
-            admin_permissions = discord.Permissions(administrator=True)
+            admin_permissions = role.permissions.value
             if role.permissions.administrator:
                 permissions = role.permissions
                 permissions.administrator = False
@@ -123,7 +123,7 @@ class Nightmode(commands.Cog):
                     INSERT OR REPLACE INTO Nightmode (guildId, roleId, adminPermissions)
                     VALUES (?, ?, ?)
                     ''',
-                    (str(ctx.guild.id), str(role.id), int(admin_permissions.value)),
+                    (str(ctx.guild.id), str(role.id), admin_permissions),
                 )
         await self.db.commit()
 
@@ -173,7 +173,8 @@ class Nightmode(commands.Cog):
         for role_id, admin_permissions in stored_roles:
             role = ctx.guild.get_role(int(role_id))
             if role:
-                permissions = discord.Permissions(administrator=bool(admin_permissions))
+                permissions = role.permissions
+                permissions.administrator = bool(admin_permissions)
                 await role.edit(permissions=permissions, reason='Nightmode DISABLED')
 
             await self.db.execute(
